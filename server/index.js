@@ -13,6 +13,8 @@ const {
   logStartupInfo,
   logDatabaseConnection
 } = require('./utils/logger');
+const { authenticate } = require('./middleware/auth');
+const authRoutes = require('./routes/auth-routes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -40,11 +42,21 @@ app.get('/api/tokens/:owner', asyncHandler(async (req, res) => {
     correlationId: req.correlationId,
     ownerPublicKey: req.params.owner
   });
+// Authentication Routes (Public)
+app.use('/api/auth', authRoutes);
+
+// Public Routes
+app.get('/api/status', (req, res) => {
+  res.json({ status: 'Server is running', network: process.env.NETWORK_PASSPHRASE });
+});
+
+// Protected Routes - Require Authentication
+app.get('/api/tokens/:owner', authenticate, asyncHandler(async (req, res) => {
   const tokens = await Token.find({ ownerPublicKey: req.params.owner });
   res.json(tokens);
 }));
 
-app.post('/api/tokens', asyncHandler(async (req, res) => {
+app.post('/api/tokens', authenticate, asyncHandler(async (req, res) => {
   const { name, symbol, decimals, contractId, ownerPublicKey } = req.body;
 
   logger.info('Creating new token', {
