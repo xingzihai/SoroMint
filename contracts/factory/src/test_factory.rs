@@ -1,9 +1,6 @@
 #![cfg(test)]
 use super::*;
-use soroban_sdk::{
-    testutils::{Address as _, Events},
-    Address, BytesN, Env, String, symbol_short, IntoVal, Val, Vec,
-};
+use soroban_sdk::{testutils::Address as _, Address, BytesN, Env, String};
 
 // Import the token contract so we can use its WASM for testing the factory.
 mod token {
@@ -47,7 +44,7 @@ fn test_initialize_and_create_token() {
     // Verify the token was initialized correctly
     let token_client = token::Client::new(&e, &token_address);
     assert_eq!(token_client.balance(&token_admin), 0);
-    
+
     // Check if we can at least see SOME events (optional for now as it's failing)
     // let events = e.events().all();
     // assert!(events.len() > 0);
@@ -73,7 +70,7 @@ fn test_update_wasm_hash() {
 }
 
 #[test]
-#[should_panic] 
+#[should_panic]
 fn test_update_wasm_hash_not_admin() {
     let e = Env::default();
     let admin = Address::generate(&e);
@@ -81,7 +78,7 @@ fn test_update_wasm_hash_not_admin() {
     let client = TokenFactoryClient::new(&e, &factory_id);
     let wasm_hash = BytesN::from_array(&e, &[1; 32]);
     client.initialize(&admin, &wasm_hash);
-    
+
     client.update_wasm_hash(&wasm_hash);
 }
 

@@ -1,3 +1,9 @@
+/**
+ * @title Environment Configuration Tests
+ * @description Test suite for environment variable validation
+ * @notice Focuses on testing valid configurations to maintain integration stability
+ */
+
 const { validateEnv, initEnv, getEnv } = require("../../config/env-config");
 
 describe("Environment Configuration", () => {
@@ -26,6 +32,7 @@ describe("Environment Configuration", () => {
     });
 
     it("should use default values for optional variables", () => {
+      delete process.env.JWT_EXPIRES_IN; // remove setup.js pollution
       process.env.MONGO_URI = "mongodb://localhost:27017/soromint";
       process.env.JWT_SECRET = "test-secret-key";
       process.env.SOROBAN_RPC_URL = "https://soroban-testnet.stellar.org";
@@ -33,7 +40,7 @@ describe("Environment Configuration", () => {
       const env = validateEnv();
 
       expect(env.PORT).toBe(5000);
-      expect(env.NODE_ENV).toBe(process.env.NODE_ENV || "development");
+      expect(env.NODE_ENV).toBe("test"); // Inherited from setup.js
       expect(env.JWT_EXPIRES_IN).toBe("24h");
       expect(env.NETWORK_PASSPHRASE).toBe("Test SDF Network ; September 2015");
       expect(env.ADMIN_SECRET_KEY).toBe("");
@@ -59,19 +66,17 @@ describe("Environment Configuration", () => {
     });
 
     it("should throw when required environment variables are missing", () => {
-      const mockExit = jest.spyOn(process, "exit").mockImplementation(() => {});
       delete process.env.MONGO_URI;
       delete process.env.JWT_SECRET;
       delete process.env.SOROBAN_RPC_URL;
 
-      validateEnv();
-
-      expect(mockExit).toHaveBeenCalled();
-      mockExit.mockRestore();
+      expect(() => {
+        validateEnv();
+      }).toThrow(/Validation Error/);
     });
   });
 
-  describe("initEnv", () => {
+  describe("initEnv and getEnv", () => {
     it("should initialize environment and cache the result", () => {
       process.env.MONGO_URI = "mongodb://localhost:27017/soromint";
       process.env.JWT_SECRET = "test-secret-key";
@@ -83,9 +88,8 @@ describe("Environment Configuration", () => {
       expect(env1).toBe(env2);
     });
 
-    it("should exit the process when validation fails", () => {
-      const mockExit = jest.spyOn(process, "exit").mockImplementation(() => {});
-      const mockError = jest.spyOn(console, "error").mockImplementation(() => {});
+    it("should throw when validation fails during initEnv", () => {
+      const mockError = jest.spyOn(console, "error").mockImplementation(() => { });
 
       delete process.env.MONGO_URI;
       delete process.env.JWT_SECRET;
@@ -94,12 +98,11 @@ describe("Environment Configuration", () => {
       jest.resetModules();
       const { initEnv: freshInitEnv } = require("../../config/env-config");
 
-      freshInitEnv();
-
-      expect(mockExit).toHaveBeenCalledWith(1);
+      expect(() => {
+        freshInitEnv();
+      }).toThrow(/Validation Error/);
       expect(mockError).toHaveBeenCalled();
 
-      mockExit.mockRestore();
       mockError.mockRestore();
     });
   });
@@ -117,6 +120,17 @@ describe("Environment Configuration", () => {
 
       expect(env.MONGO_URI).toBe("mongodb://localhost:27017/soromint");
       expect(env.JWT_SECRET).toBe("test-secret-key");
+    });
+
+    it("should return cached environment via getEnv if already initialized", () => {
+      process.env.MONGO_URI = "mongodb://localhost:27017/soromint";
+      process.env.JWT_SECRET = "test-secret-key";
+      process.env.SOROBAN_RPC_URL = "https://soroban-testnet.stellar.org";
+
+      const env1 = initEnv();
+      const env2 = getEnv();
+
+      expect(env1).toBe(env2);
     });
   });
 });

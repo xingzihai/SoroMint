@@ -83,7 +83,6 @@ fn test_initiation_authorization() {
     let client = TestContractClient::new(&e, &contract_id);
 
     let owner = Address::generate(&e);
-    let new_owner = Address::generate(&e);
 
     client.init(&owner);
 

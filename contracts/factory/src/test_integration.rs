@@ -33,30 +33,6 @@ fn setup_factory() -> (Env, Address, TokenFactoryClient<'static>) {
     (e, admin, client)
 }
 
-/// @notice Helper to extract event data from the last emitted event
-/// @param e - The environment instance
-/// @return Val - The event data payload
-fn last_event_data(e: &Env) -> Val {
-    let events = e.events().all();
-    let last = events.last().expect("expected at least one event");
-    last.2
-}
-
-/// @notice Helper to find an event by its action symbol
-/// @param e - The environment instance
-/// @param action - The action symbol to search for
-/// @return Option<Val> - The event data if found
-fn find_event_by_symbol(e: &Env, symbol: Symbol) -> Option<Val> {
-    let events = e.events().all();
-    events
-        .iter()
-        .rev()
-        .find(|(_cid, topics, _data)| {
-            let t: Vec<Val> = topics.clone();
-            t.len() >= 2 && t.get(1).map(|v| v.get_payload() == <Symbol as IntoVal<Env, Val>>::into_val(&symbol.clone(), e).get_payload()).unwrap_or(false)
-        })
-        .map(|(_cid, _topics, data)| data)
-}
 
 // ===========================================================================
 // Cross-Contract Deployment Tests
@@ -483,10 +459,7 @@ fn test_update_wasm_hash_and_deploy() {
     let wasm_hash_v2 = BytesN::from_array(&e, &[0xdd; 32]); // Different hash
     factory_client.update_wasm_hash(&wasm_hash_v2);
     
-    // Deploy with v2
-    let salt2 = BytesN::from_array(&e, &[12; 32]);
-    let token_admin2 = Address::generate(&e);
-    
+    // Deploy with v2    
     // This will fail since wasm_hash_v2 is not a real WASM, but it tests the path
     // In a real scenario, this would deploy with the new WASM
     // For this test, we just verify the update_wasm_hash call succeeds

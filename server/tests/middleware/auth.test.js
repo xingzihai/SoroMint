@@ -70,7 +70,8 @@ beforeAll(async () => {
   // Create test user
   testUser = new User({
     publicKey: TEST_PUBLIC_KEY,
-    username: 'testuser'
+    username: 'testuser',
+    role: 'admin'
   });
   await testUser.save();
 
@@ -101,7 +102,8 @@ afterEach(async () => {
   // Recreate test user
   testUser = new User({
     publicKey: TEST_PUBLIC_KEY,
-    username: 'testuser'
+    username: 'testuser',
+    role: 'admin'
   });
   await testUser.save();
 

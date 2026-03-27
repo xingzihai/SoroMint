@@ -333,6 +333,19 @@ describe("Token Routes", () => {
         .set("Authorization", `Bearer ${validToken}`);
 
       expect(response.status).toBe(200);
+      expect(response.body.data.length).toBe(4);
+      expect(response.body.metadata.totalCount).toBe(4);
+      expect(response.body.metadata.search).toBeNull();
+    });
+
+    it("should return all tokens when search parameter is not provided", async () => {
+      const response = await request(app)
+        .get(`/api/tokens/${TEST_PUBLIC_KEY}`)
+        .set("Authorization", `Bearer ${validToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.length).toBe(4);
+      expect(response.body.metadata.totalCount).toBe(4);
       expect(response.body.data).toHaveLength(4);
       expect(response.body.metadata.search).toBeNull();
     });
