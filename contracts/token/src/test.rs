@@ -158,3 +158,79 @@ proptest! {
         let _ = client.status();
     }
 }
+
+// --- Bug condition exploration tests ---
+
+/// Validates: Requirements 2.1, 2.3
+#[test]
+fn test_v2_version_token() {
+    let (e, _, _, client) = setup();
+    assert_eq!(client.version(), String::from_str(&e, "2.0.0"));
+}
+
+/// Validates: Requirements 2.1
+#[test]
+fn test_v2_mint_exists() {
+    let (e, _, user, client) = setup();
+    let memo = String::from_str(&e, "test memo");
+    client.v2_mint(&user, &1000, &memo);
+    assert_eq!(client.balance(&user), 1000);
+}
+
+// --- Preservation property tests ---
+
+/// Validates: Requirements 3.1, 3.4
+#[test]
+fn test_preservation_mint() {
+    let (_, _, user, client) = setup();
+
+    let balance_before = client.balance(&user);
+    let supply_before = client.supply();
+
+    let amount: i128 = 500;
+    client.mint(&user, &amount);
+
+    assert_eq!(client.balance(&user) - balance_before, amount);
+    assert_eq!(client.supply() - supply_before, amount);
+}
+
+/// Validates: Requirements 3.1, 3.4
+#[test]
+fn test_preservation_transfer() {
+    let (e, _, user1, client) = setup();
+    let user2 = Address::generate(&e);
+
+    let mint_amount: i128 = 1000;
+    let transfer_amount: i128 = 300;
+
+    client.mint(&user1, &mint_amount);
+
+    let bal1_before = client.balance(&user1);
+    let bal2_before = client.balance(&user2);
+
+    client.transfer(&user1, &user2, &transfer_amount);
+
+    assert_eq!(bal1_before - client.balance(&user1), transfer_amount);
+    assert_eq!(client.balance(&user2) - bal2_before, transfer_amount);
+}
+
+/// Validates: Requirements 3.3
+#[test]
+fn test_preservation_status() {
+    let (e, _, _, client) = setup();
+    assert_eq!(client.status(), String::from_str(&e, "alive"));
+}
+
+/// Validates: Requirements 3.1, 3.4
+#[test]
+fn test_preservation_fee_config_roundtrip() {
+    let (e, _, _, client) = setup();
+    let treasury = Address::generate(&e);
+
+    client.set_fee_config(&true, &250u32, &treasury);
+
+    let config = client.fee_config().expect("fee config should be set");
+    assert_eq!(config.enabled, true);
+    assert_eq!(config.fee_bps, 250u32);
+    assert_eq!(config.treasury, treasury);
+}

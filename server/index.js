@@ -9,9 +9,12 @@ require("dotenv").config();
 const { initEnv, getEnv } = require("./config/env-config");
 initEnv();
 
+const { scheduleBackups } = require("./services/backup-service");
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const { securityHeaders } = require("./middleware/security-headers");
 
 const { initSentry } = require("./config/sentry");
 const { errorHandler, notFoundHandler } = require("./middleware/error-handler");
@@ -28,12 +31,13 @@ const statusRoutes = require("./routes/status-routes");
 const auditRoutes = require("./routes/audit-routes");
 const tokenRoutes = require("./routes/token-routes");
 const webhookRoutes = require("./routes/webhook-routes");
+const analyticsRoutes = require("./routes/analytics-routes");
 
 const createApp = ({ authRouter = authRoutes, tokenRouter = tokenRoutes } = {}) => {
   const app = express();
 
   initSentry(app);
-
+  app.use(securityHeaders);
   app.use(cors());
   app.use(express.json());
 
@@ -45,6 +49,7 @@ const createApp = ({ authRouter = authRoutes, tokenRouter = tokenRoutes } = {}) 
   app.use("/api", statusRoutes);
   app.use("/api", auditRoutes);
   app.use("/api", tokenRouter);
+  app.use("/api", analyticsRoutes);
   app.use("/api/auth", authRouter);
   app.use("/api", webhookRoutes);
 
@@ -75,6 +80,7 @@ const startServer = async () => {
     logStartupInfo(env.PORT, env.NETWORK_PASSPHRASE);
     console.log(`Server running on http://localhost:${env.PORT}`);
     console.log(`API Documentation available at http://localhost:${env.PORT}/api-docs`);
+    scheduleBackups();
   });
 };
 
