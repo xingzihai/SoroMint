@@ -1,0 +1,90 @@
+# Dependabot configuration for automated dependency updates
+# Enables automatic security updates and version bumps
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates
+
+version: 2
+registries:
+  npm-registry:
+    type: npm-registry
+    url: https://registry.npmjs.org
+
+updates:
+  # Backend dependencies (server/)
+  - package-ecosystem: "npm"
+    directory: "/server"
+    schedule:
+      interval: "daily"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "backend"
+    commit-message:
+      prefix: "deps(server)"
+      include: "scope"
+    # Group minor and patch updates for cleaner PRs
+    groups:
+      minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    # Security updates are always created immediately
+    # regardless of schedule
+    reviewers:
+      - "EDOHWARES"
+    # Auto-rebase when PRs conflict
+    rebase-strategy: "auto"
+    # Limit to security and important updates initially
+    # Can be expanded later
+    ignore:
+      # Don't update major versions automatically (review manually)
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # Frontend dependencies (client/)
+  - package-ecosystem: "npm"
+    directory: "/client"
+    schedule:
+      interval: "daily"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "frontend"
+    commit-message:
+      prefix: "deps(client)"
+      include: "scope"
+    groups:
+      minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    reviewers:
+      - "EDOHWARES"
+    rebase-strategy: "auto"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "ci/cd"
+    commit-message:
+      prefix: "ci"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "EDOHWARES"
