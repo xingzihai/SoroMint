@@ -8,14 +8,29 @@ import './i18n'
 import './index.css'
 import App from './App.jsx'
 import ProfilePage from './components/ProfilePage.jsx'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <HelmetProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<App />} />
-          <Route path="/profile" element={<ProfilePage />} />
+          <Route
+            path="/"
+            element={
+              <ErrorBoundary name="App">
+                <App />
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ErrorBoundary name="ProfilePage">
+                <ProfilePage />
+              </ErrorBoundary>
+            }
+          />
         </Routes>
       </BrowserRouter>
       <ToastContainer
